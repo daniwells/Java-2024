@@ -31,6 +31,7 @@ public class Custumer extends javax.swing.JDialog {
         setResizable(false);
         setLocationRelativeTo(null);
         searchClient();
+        initTableListener();
     }
     
     MyDatabase db = new MyDatabase();
@@ -40,28 +41,29 @@ public class Custumer extends javax.swing.JDialog {
             try{
                 String query = "insert custumer(name_cus, cpf_cus, "+
                                "date_birth_cus, city_cus, state_cus,"+
-                               "sex_cus, home_cus, defic_cus)"+
-                                "values(?,?,?,?,?,?,?,?)";
+                               "street_cus, sex_cus, home_cus, defic_cus)"+
+                                "values(?,?,?,?,?,?,?,?,?)";
                 PreparedStatement smtp = db.conn.prepareStatement(query);
                 smtp.setString(1, jTname.getText());
                 smtp.setString(2, jTcpf.getText());
                 smtp.setString(3, jTbirth.getText());
                 smtp.setString(4, jTcity.getText());
                 smtp.setString(5, jTstate.getText());
+                smtp.setString(6, jTstreet.getText());
                 
                 String selectedValue = jCsex.getSelectedItem().toString();
-                smtp.setString(6, selectedValue);
+                smtp.setString(7, selectedValue);
                 
                 if(jChome.isSelected()){
-                    smtp.setString(7, "Active");
+                    smtp.setString(8, "Active");
                 }else{
-                    smtp.setString(7, "Inactive");
+                    smtp.setString(8, "Inactive");
                 }
                 
                 if(jCdeficity.isSelected()){
-                    smtp.setString(8, "Yes");
+                    smtp.setString(9, "Yes");
                 }else{
-                    smtp.setString(8, "No");
+                    smtp.setString(9, "No");
                 }
                 smtp.executeUpdate();
                 JOptionPane.showMessageDialog(null, "DATAS WAS REGISTERED");
@@ -90,14 +92,60 @@ public class Custumer extends javax.swing.JDialog {
                         rs.getString("date_birth_cus"),
                         rs.getString("state_cus"),
                         rs.getString("city_cus"),
-                        rs.getString("sex_cus"),
-                    });
-                    
-                    smtp.close();
-                    db.conn.close();
+                        rs.getString("street_cus"),
+                        rs.getString("sex_cus")
+                    });                                   
                 }
+                smtp.close();
+                db.conn.close();
             }catch(SQLException e){
                 System.out.println("Error to searching "+e);
+            }
+        }
+    }
+    
+    private void initTableListener(){
+        jTableCustumer.addMouseListener(new java.awt.event.MouseAdapter(){
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt){
+                int selectedRow = jTableCustumer.getSelectedRow();
+                if(selectedRow != -1){
+                    jLid.setText(jTableCustumer.getValueAt(selectedRow, 0).toString());
+                    jTname.setText(jTableCustumer.getValueAt(selectedRow, 1).toString());
+                    jTcpf.setText(jTableCustumer.getValueAt(selectedRow, 2).toString());
+                    jTbirth.setText(jTableCustumer.getValueAt(selectedRow, 3).toString());
+                    jTcity.setText(jTableCustumer.getValueAt(selectedRow, 4).toString());
+                    jTstate.setText(jTableCustumer.getValueAt(selectedRow, 5).toString());
+                    jTstreet.setText(jTableCustumer.getValueAt(selectedRow, 6).toString());
+                    jCsex.setSelectedItem(jTableCustumer.getValueAt(selectedRow, 7).toString());  
+                }
+            }
+        });
+    }
+    
+    private void changeCostumerDatas(){
+        if(db.getConnection()){
+            try{
+                String query = "update custumer set name_cus=?, cpf_cus=?, date_birth_cus=?, "+
+                                "state_cus=?, city_cus=?, street_cus=?, sex_cus=? where idcustumer = ? ";
+                
+                PreparedStatement changeDatas = db.conn.prepareStatement(query);
+                changeDatas.setString(1, jTname.getText());
+                changeDatas.setString(2, jTcpf.getText());
+                changeDatas.setString(3, jTbirth.getText());
+                changeDatas.setString(5, jTstate.getText());
+                changeDatas.setString(4, jTcity.getText());
+                changeDatas.setString(6, jTstreet.getText());
+                changeDatas.setString(7, jCsex.getSelectedItem().toString());
+                changeDatas.setString(8, jLid.getText());
+                
+                changeDatas.executeUpdate();
+                JOptionPane.showMessageDialog(null, "CHANDED DATAS!");
+                
+                changeDatas.close();
+                db.conn.close();
+            }catch(SQLException e){
+                JOptionPane.showMessageDialog(null, "ERROR IN THE SQL"+e.getMessage());
             }
         }
     }
@@ -149,6 +197,7 @@ public class Custumer extends javax.swing.JDialog {
         jBadd = new javax.swing.JButton();
         jBremove = new javax.swing.JButton();
         jBclear = new javax.swing.JButton();
+        jLid = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -376,14 +425,14 @@ public class Custumer extends javax.swing.JDialog {
         jTableCustumer.setBorder(javax.swing.BorderFactory.createEtchedBorder());
         jTableCustumer.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {"teste", "teste", "teste", "teste", "teste", "teste", null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null}
+                {"teste", "teste", "teste", "teste", "teste", "teste", null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "id", "name", "cpf", "date of birth", "state", "city", "street"
+                "id", "name", "cpf", "date of birth", "state", "city", "street", "sex"
             }
         ));
         jTableCustumer.setShowGrid(true);
@@ -507,6 +556,8 @@ public class Custumer extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
+        jLid.setText("ID");
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -523,16 +574,20 @@ public class Custumer extends javax.swing.JDialog {
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLid)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLid))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -588,11 +643,14 @@ public class Custumer extends javax.swing.JDialog {
     }//GEN-LAST:event_jTcityActionPerformed
 
     private void jBeditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBeditActionPerformed
-        // TODO add your handling code here:
+        initTableListener();
+        changeCostumerDatas();
+        searchClient();
     }//GEN-LAST:event_jBeditActionPerformed
 
     private void jBaddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBaddActionPerformed
         registerCustumer();
+        searchClient();
     }//GEN-LAST:event_jBaddActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
@@ -667,6 +725,7 @@ public class Custumer extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLid;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
