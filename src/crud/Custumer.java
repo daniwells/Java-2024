@@ -9,10 +9,13 @@ package crud;
 // ctrl + shift + i
 
 import connection.MyDatabase;
+import java.awt.Component;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -149,6 +152,49 @@ public class Custumer extends javax.swing.JDialog {
             }
         }
     }
+    
+    private void remove_costumer(){
+        if(db.getConnection()){
+            try{
+                String query = "DELETE FROM custumer WHERE idcustumer = ?";
+                PreparedStatement remove = db.conn.prepareStatement(query);
+                String index = (String)jTableCustumer.getModel().getValueAt(jTableCustumer.getSelectedRow(), 0);
+                remove.setString(1, index);
+                
+                int choice = JOptionPane.showConfirmDialog(null, "Deseja excluir o cliente?", "Confirmação", JOptionPane.YES_NO_OPTION);
+                if(choice == JOptionPane.YES_OPTION){
+                    int result = remove.executeUpdate();
+                    if(result>0){
+                        JOptionPane.showMessageDialog(null, "Costumer removed with success!");
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Was cannot to remve the costumer!");
+                    }
+                    
+                    remove.close();
+                    db.conn.close();
+                }
+                
+            }catch(SQLException e){
+                JOptionPane.showMessageDialog(null, "Error to remove"+e.toString());
+            }
+        }
+    }
+    
+    private static void clearFields(JPanel jPanel){
+        Component[] components = jPanel.getComponents();
+        for(Component component : components){
+            if(component instanceof JTextField){
+                JTextField fieldsTF = (JTextField)component;
+                fieldsTF.setText("");
+            }
+        }
+    }
+    
+    private void clearTable(){
+        DefaultTableModel table = (DefaultTableModel)jTableCustumer.getModel();
+        table.setNumRows(0);
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -162,7 +208,7 @@ public class Custumer extends javax.swing.JDialog {
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
-        jPanel10 = new javax.swing.JPanel();
+        jPaddress = new javax.swing.JPanel();
         jLabel8 = new javax.swing.JLabel();
         jPanel11 = new javax.swing.JPanel();
         jLabel13 = new javax.swing.JLabel();
@@ -171,7 +217,7 @@ public class Custumer extends javax.swing.JDialog {
         jTstate = new javax.swing.JTextField();
         jTcity = new javax.swing.JTextField();
         jTstreet = new javax.swing.JTextField();
-        jPanel7 = new javax.swing.JPanel();
+        jPpersonalDatas = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         jPanel8 = new javax.swing.JPanel();
         jLabel10 = new javax.swing.JLabel();
@@ -228,8 +274,8 @@ public class Custumer extends javax.swing.JDialog {
 
         jPanel3.setBackground(new java.awt.Color(250, 250, 250));
 
-        jPanel10.setBackground(new java.awt.Color(250, 250, 250));
-        jPanel10.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPaddress.setBackground(new java.awt.Color(250, 250, 250));
+        jPaddress.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         jLabel8.setText("State");
 
@@ -265,32 +311,32 @@ public class Custumer extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
-        jPanel10.setLayout(jPanel10Layout);
-        jPanel10Layout.setHorizontalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout jPaddressLayout = new javax.swing.GroupLayout(jPaddress);
+        jPaddress.setLayout(jPaddressLayout);
+        jPaddressLayout.setHorizontalGroup(
+            jPaddressLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel11, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(jPanel10Layout.createSequentialGroup()
+            .addGroup(jPaddressLayout.createSequentialGroup()
                 .addGap(16, 16, 16)
-                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel10Layout.createSequentialGroup()
+                .addGroup(jPaddressLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPaddressLayout.createSequentialGroup()
                         .addComponent(jLabel14)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
-                        .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPaddressLayout.createSequentialGroup()
+                        .addGroup(jPaddressLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jTcity, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jTstreet)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel10Layout.createSequentialGroup()
-                                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPaddressLayout.createSequentialGroup()
+                                .addGroup(jPaddressLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(jLabel15, javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel8, javax.swing.GroupLayout.Alignment.LEADING))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(jTstate, javax.swing.GroupLayout.Alignment.LEADING))
                         .addGap(19, 19, 19))))
         );
-        jPanel10Layout.setVerticalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+        jPaddressLayout.setVerticalGroup(
+            jPaddressLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPaddressLayout.createSequentialGroup()
                 .addComponent(jPanel11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel8)
@@ -307,8 +353,8 @@ public class Custumer extends javax.swing.JDialog {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel7.setBackground(new java.awt.Color(250, 250, 250));
-        jPanel7.setBorder(javax.swing.BorderFactory.createEtchedBorder());
+        jPpersonalDatas.setBackground(new java.awt.Color(250, 250, 250));
+        jPpersonalDatas.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
         jLabel7.setText("Name");
 
@@ -344,32 +390,32 @@ public class Custumer extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        javax.swing.GroupLayout jPpersonalDatasLayout = new javax.swing.GroupLayout(jPpersonalDatas);
+        jPpersonalDatas.setLayout(jPpersonalDatasLayout);
+        jPpersonalDatasLayout.setHorizontalGroup(
+            jPpersonalDatasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jPanel8, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(jPanel7Layout.createSequentialGroup()
+            .addGroup(jPpersonalDatasLayout.createSequentialGroup()
                 .addGap(16, 16, 16)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel7Layout.createSequentialGroup()
+                .addGroup(jPpersonalDatasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPpersonalDatasLayout.createSequentialGroup()
                         .addComponent(jLabel11)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
-                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPpersonalDatasLayout.createSequentialGroup()
+                        .addGroup(jPpersonalDatasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jTbirth, javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jTcpf)
-                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel7Layout.createSequentialGroup()
-                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPpersonalDatasLayout.createSequentialGroup()
+                                .addGroup(jPpersonalDatasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(jLabel12, javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel7, javax.swing.GroupLayout.Alignment.LEADING))
                                 .addGap(0, 0, Short.MAX_VALUE))
                             .addComponent(jTname, javax.swing.GroupLayout.Alignment.LEADING))
                         .addGap(19, 19, 19))))
         );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel7Layout.createSequentialGroup()
+        jPpersonalDatasLayout.setVerticalGroup(
+            jPpersonalDatasLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPpersonalDatasLayout.createSequentialGroup()
                 .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel7)
@@ -520,6 +566,11 @@ public class Custumer extends javax.swing.JDialog {
         jBremove.setBackground(new java.awt.Color(48, 56, 72));
         jBremove.setForeground(new java.awt.Color(255, 255, 255));
         jBremove.setText("Remove");
+        jBremove.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jBremoveActionPerformed(evt);
+            }
+        });
 
         jBclear.setBackground(new java.awt.Color(48, 56, 72));
         jBclear.setForeground(new java.awt.Color(255, 255, 255));
@@ -572,9 +623,9 @@ public class Custumer extends javax.swing.JDialog {
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jPpersonalDatas, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jPaddress, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
                         .addComponent(jLid)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -585,8 +636,8 @@ public class Custumer extends javax.swing.JDialog {
                 .addContainerGap()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jPaddress, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPpersonalDatas, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jLid))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel9, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -646,16 +697,28 @@ public class Custumer extends javax.swing.JDialog {
         initTableListener();
         changeCostumerDatas();
         searchClient();
+        clearFields(jPpersonalDatas);
+        clearFields(jPaddress);
     }//GEN-LAST:event_jBeditActionPerformed
 
     private void jBaddActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBaddActionPerformed
         registerCustumer();
         searchClient();
+        clearFields(jPpersonalDatas);
+        clearFields(jPaddress);
     }//GEN-LAST:event_jBaddActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         searchClient();
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jBremoveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBremoveActionPerformed
+        remove_costumer();
+        clearFields(jPpersonalDatas);
+        clearFields(jPaddress);
+        clearTable();
+        searchClient();
+    }//GEN-LAST:event_jBremoveActionPerformed
 
     /**
      * @param args the command line arguments
@@ -726,17 +789,17 @@ public class Custumer extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLid;
+    private javax.swing.JPanel jPaddress;
     private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
+    private javax.swing.JPanel jPpersonalDatas;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTableCustumer;
     private javax.swing.JTextField jTbirth;
