@@ -15,7 +15,7 @@ import java.sql.SQLException;
 public class MyDatabase {
     public Connection conn = null;
     private final String driver = "com.mysql.cj.jdbc.Driver";
-    private final String nameDatabase = "javaProject";
+    private final String nameDatabase = "javaproject";
     private final String local = "jdbc:mysql://localhost:3306/"+nameDatabase;
     private final String login = "root";
     private final String password = "root";

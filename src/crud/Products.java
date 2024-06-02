@@ -62,21 +62,24 @@ public class Products extends javax.swing.JDialog {
                 String queryCategory = "select id_category, name_category from category";
                 PreparedStatement smtpCategory = db.conn.prepareStatement(queryCategory);
                 ResultSet resultCategory = smtpCategory.executeQuery();
-                 
+                
+                String id_category = "1";
                 while(resultCategory.next()){
-                    if(){resultCategory.getString("name_category");}
+                    if(resultCategory.getString("name_category") == selectedValue){
+                        id_category = resultCategory.getString("id_category");
+                        break;
+                    }
                     
                 }
                 
-                String query = "insert product (name_product, value_product, mark_product, description_product, id_category) values(?)";
+                String query = "insert product (name_product, value_product, mark_product, description_product, id_category) values(?,?,?,?,?)";
                 PreparedStatement smtp = db.conn.prepareStatement(query);
                 smtp.setString(1, jTname.getText());
                 smtp.setString(2, jTvalue.getText());
                 smtp.setString(3, jTmark.getText());
+                smtp.setString(4, jTdescription.getText());
                 
-                smtp.setString(4, selectedValue);
-                
-                smtp.setString(5, jTdescription.getText());
+                smtp.setString(5, id_category);
                 
                 smtp.executeUpdate();
                 JOptionPane.showMessageDialog(null, "DATAS WAS REGISTERED");
