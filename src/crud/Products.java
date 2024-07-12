@@ -13,6 +13,7 @@ import java.sql.ResultSet;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
@@ -32,6 +33,8 @@ public class Products extends javax.swing.JDialog {
         setResizable(false);
         setLocationRelativeTo(null);
         addCategory();
+        searchProduct();
+        initTableListenerProduct();
     }
     
     MyDatabase db = new MyDatabase();
@@ -42,7 +45,6 @@ public class Products extends javax.swing.JDialog {
                 String query = "SELECT id_category, name_category FROM category";
                 PreparedStatement smtp = db.conn.prepareStatement(query);
                 ResultSet result = smtp.executeQuery();
-                /*List<String> categoryDatas = jCcategory.getSelectedItem();*/
                 
                 while(result.next()){
                     jCcategory.addItem(result.getString("name_category"));
@@ -53,24 +55,41 @@ public class Products extends javax.swing.JDialog {
         }
     }
     
+    private String searchIdCategory(){
+        if(db.getConnection()){
+            
+            try{
+                String selectedValue = jCcategory.getSelectedItem().toString();
+
+                String queryCategory = "select id_category, name_category from category";
+                PreparedStatement smtpCategory = db.conn.prepareStatement(queryCategory);
+                ResultSet resultCategory = smtpCategory.executeQuery();
+
+                String id_category = "1";
+                while(resultCategory.next()){
+                    System.out.println(resultCategory.getString("name_category"));
+                    System.out.println(selectedValue);
+                    if(resultCategory.getString("name_category").equals(selectedValue)){
+                        System.out.println(resultCategory.getString("id_category"));
+                        id_category = resultCategory.getString("id_category");
+                        break;
+                    }
+                }
+
+                return id_category;
+            }catch(SQLException error){
+                JOptionPane.showMessageDialog(null, "Insert error in the database!"+error.toString());
+                return "";
+            }
+        }
+        return "";
+    }
+    
     private void registerCustumer(){
         if(db.getConnection()){
             try{
                 
-                String selectedValue = jCcategory.getSelectedItem().toString();
-                
-                String queryCategory = "select id_category, name_category from category";
-                PreparedStatement smtpCategory = db.conn.prepareStatement(queryCategory);
-                ResultSet resultCategory = smtpCategory.executeQuery();
-                
-                String id_category = "1";
-                while(resultCategory.next()){
-                    if(resultCategory.getString("name_category") == selectedValue){
-                        id_category = resultCategory.getString("id_category");
-                        break;
-                    }
-                    
-                }
+                String id_category = searchIdCategory();
                 
                 String query = "insert product (name_product, value_product, mark_product, description_product, id_category) values(?,?,?,?,?)";
                 PreparedStatement smtp = db.conn.prepareStatement(query);
@@ -90,7 +109,118 @@ public class Products extends javax.swing.JDialog {
             }
         }
     }
-
+    
+    private void searchProduct(){
+        if(db.getConnection()){
+            try{
+                String query = "select * from product where name_product like ?";
+                PreparedStatement smtp = db.conn.prepareStatement(query);
+                smtp.setString(1,"%"+jTsearch.getText()+"%");
+                ResultSet rs = smtp.executeQuery();
+                DefaultTableModel table = (DefaultTableModel) jTableProduct.getModel();
+                table.setNumRows(0);
+                while(rs.next()){
+                    table.addRow(new Object[] {
+                        rs.getString("id_product"),
+                        rs.getString("name_product"),
+                        rs.getString("value_product"),
+                        rs.getString("mark_product"),
+                        rs.getString("description_product"),
+                        rs.getString("id_category"),
+                    });                                   
+                }
+                smtp.close();
+                db.conn.close();
+            }catch(SQLException e){
+                System.out.println("Error to searching "+e);
+            }
+        }
+    }
+    
+    private void initTableListenerProduct(){
+        jTableProduct.addMouseListener(new java.awt.event.MouseAdapter(){
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt){
+                int selectedRow = jTableProduct.getSelectedRow();
+                if(selectedRow != -1){
+                    jLidProduct.setText(jTableProduct.getValueAt(selectedRow, 0).toString());
+                    jTname.setText(jTableProduct.getValueAt(selectedRow, 1).toString());
+                    jTvalue.setText(jTableProduct.getValueAt(selectedRow, 2).toString());
+                    jTmark.setText(jTableProduct.getValueAt(selectedRow, 3).toString());
+                    jTdescription.setText(jTableProduct.getValueAt(selectedRow, 4).toString());
+                    jCcategory.setSelectedItem(jTableProduct.getValueAt(selectedRow, 5).toString());
+                }
+            }
+        });
+    }
+    
+    private void changeProductDatas(){
+        if(db.getConnection()){
+            try{
+                String id_category = searchIdCategory();
+                
+                String query = "update product set name_product=?, value_product=?, mark_product=?, "+
+                                "description_product=?, id_category=? where id_product = ? ";
+                
+                PreparedStatement changeDatas = db.conn.prepareStatement(query);
+                changeDatas.setString(1, jTname.getText());
+                changeDatas.setString(2, jTvalue.getText());
+                changeDatas.setString(3, jTmark.getText());
+                changeDatas.setString(4, jTdescription.getText());
+                changeDatas.setString(5, id_category);
+                changeDatas.setString(6, jLidProduct.getText());
+                
+                changeDatas.executeUpdate();
+                JOptionPane.showMessageDialog(null, "CHANDED DATAS!");
+                
+                changeDatas.close();
+                db.conn.close();
+            }catch(SQLException e){
+                JOptionPane.showMessageDialog(null, "ERROR IN THE SQL"+e.getMessage());
+            }
+        }
+    }
+    
+    private void remove_costumer(){
+        if(db.getConnection()){
+            try{
+                String query = "DELETE FROM product WHERE id_product = ?";
+                PreparedStatement remove = db.conn.prepareStatement(query);
+                String index = (String)jTableProduct.getModel().getValueAt(jTableProduct.getSelectedRow(), 0);
+                remove.setString(1, index);
+                
+                int choice = JOptionPane.showConfirmDialog(null, "You want to remove product?", "Confirmation", JOptionPane.YES_NO_OPTION);
+                if(choice == JOptionPane.YES_OPTION){
+                    int result = remove.executeUpdate();
+                    if(result>0){
+                        JOptionPane.showMessageDialog(null, "Product removed with success!");
+                    }else{
+                        JOptionPane.showMessageDialog(null, "Was cannot to remve the Product!");
+                    }
+                    
+                    remove.close();
+                    db.conn.close();
+                }
+                
+            }catch(SQLException e){
+                JOptionPane.showMessageDialog(null, "Error to remove"+e.toString());
+            }
+        }
+    }
+    
+    private void clearFields(JPanel jPanel){
+        Component[] components = jPanel.getComponents();
+        jTdescription.setText("");
+        for(Component component : components){
+            if(component instanceof JTextField){
+                JTextField fieldsTF = (JTextField)component;
+                fieldsTF.setText("");
+            }
+            
+            
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -111,26 +241,29 @@ public class Products extends javax.swing.JDialog {
         jPanel3 = new javax.swing.JPanel();
         jPanel14 = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
-        jPanel4 = new javax.swing.JPanel();
+        jLidProduct = new javax.swing.JLabel();
+        jPanelDataProduct1 = new javax.swing.JPanel();
         jTname = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         jTmark = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jTvalue = new javax.swing.JTextField();
-        jPanel5 = new javax.swing.JPanel();
+        jPanelDataProduct2 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTdescription = new javax.swing.JTextArea();
         jCcategory = new javax.swing.JComboBox<>();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        jTableProduct = new javax.swing.JTable();
         jBadd1 = new javax.swing.JButton();
         jBremove1 = new javax.swing.JButton();
         jBedit1 = new javax.swing.JButton();
         jBclear1 = new javax.swing.JButton();
         jclose1 = new javax.swing.JButton();
+        jTsearch = new javax.swing.JTextField();
+        jBsearch = new javax.swing.JButton();
 
         jBadd.setBackground(new java.awt.Color(48, 56, 72));
         jBadd.setForeground(new java.awt.Color(255, 255, 255));
@@ -184,7 +317,7 @@ public class Products extends javax.swing.JDialog {
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(200, 200, 200)
                 .addComponent(jLabel1)
-                .addContainerGap(214, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -199,6 +332,8 @@ public class Products extends javax.swing.JDialog {
         jLabel16.setForeground(new java.awt.Color(255, 255, 255));
         jLabel16.setText("Fields of Product");
 
+        jLidProduct.setText("ID");
+
         javax.swing.GroupLayout jPanel14Layout = new javax.swing.GroupLayout(jPanel14);
         jPanel14.setLayout(jPanel14Layout);
         jPanel14Layout.setHorizontalGroup(
@@ -206,17 +341,21 @@ public class Products extends javax.swing.JDialog {
             .addGroup(jPanel14Layout.createSequentialGroup()
                 .addGap(23, 23, 23)
                 .addComponent(jLabel16)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLidProduct)
+                .addGap(34, 34, 34))
         );
         jPanel14Layout.setVerticalGroup(
             jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel14Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel16)
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel16)
+                    .addComponent(jLidProduct))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jPanel4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(187, 187, 187)));
+        jPanelDataProduct1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(187, 187, 187)));
 
         jTname.setToolTipText("");
         jTname.addActionListener(new java.awt.event.ActionListener() {
@@ -237,13 +376,13 @@ public class Products extends javax.swing.JDialog {
 
         jLabel4.setText("Mark of product");
 
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanelDataProduct1Layout = new javax.swing.GroupLayout(jPanelDataProduct1);
+        jPanelDataProduct1.setLayout(jPanelDataProduct1Layout);
+        jPanelDataProduct1Layout.setHorizontalGroup(
+            jPanelDataProduct1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelDataProduct1Layout.createSequentialGroup()
                 .addGap(30, 30, 30)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanelDataProduct1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel4)
                     .addComponent(jLabel3)
                     .addComponent(jTmark, javax.swing.GroupLayout.DEFAULT_SIZE, 209, Short.MAX_VALUE)
@@ -252,9 +391,9 @@ public class Products extends javax.swing.JDialog {
                     .addComponent(jTvalue))
                 .addContainerGap(34, Short.MAX_VALUE))
         );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
+        jPanelDataProduct1Layout.setVerticalGroup(
+            jPanelDataProduct1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelDataProduct1Layout.createSequentialGroup()
                 .addGap(24, 24, 24)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -270,7 +409,7 @@ public class Products extends javax.swing.JDialog {
                 .addContainerGap(25, Short.MAX_VALUE))
         );
 
-        jPanel5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(187, 187, 187)));
+        jPanelDataProduct2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(187, 187, 187)));
 
         jLabel7.setText("Category of product");
 
@@ -286,27 +425,27 @@ public class Products extends javax.swing.JDialog {
             }
         });
 
-        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
-        jPanel5.setLayout(jPanel5Layout);
-        jPanel5Layout.setHorizontalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
+        javax.swing.GroupLayout jPanelDataProduct2Layout = new javax.swing.GroupLayout(jPanelDataProduct2);
+        jPanelDataProduct2.setLayout(jPanelDataProduct2Layout);
+        jPanelDataProduct2Layout.setHorizontalGroup(
+            jPanelDataProduct2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelDataProduct2Layout.createSequentialGroup()
                 .addContainerGap(32, Short.MAX_VALUE)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanelDataProduct2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanelDataProduct2Layout.createSequentialGroup()
+                        .addGroup(jPanelDataProduct2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel5)
                             .addComponent(jLabel7))
                         .addGap(118, 118, 118))
-                    .addGroup(jPanel5Layout.createSequentialGroup()
-                        .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanelDataProduct2Layout.createSequentialGroup()
+                        .addGroup(jPanelDataProduct2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jCcategory, javax.swing.GroupLayout.PREFERRED_SIZE, 209, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addContainerGap())))
         );
-        jPanel5Layout.setVerticalGroup(
-            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel5Layout.createSequentialGroup()
+        jPanelDataProduct2Layout.setVerticalGroup(
+            jPanelDataProduct2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanelDataProduct2Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addComponent(jLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -323,9 +462,9 @@ public class Products extends javax.swing.JDialog {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jPanelDataProduct1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanelDataProduct2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addComponent(jPanel14, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
@@ -335,23 +474,23 @@ public class Products extends javax.swing.JDialog {
                 .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jPanelDataProduct1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanelDataProduct2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(26, 26, 26))
         );
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        jTableProduct.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "name", "value", "mark", "category", "description"
+                "id", "name", "value", "mark", "description", "category"
             }
         ));
-        jScrollPane2.setViewportView(jTable1);
+        jScrollPane2.setViewportView(jTableProduct);
 
         jBadd1.setBackground(new java.awt.Color(48, 56, 72));
         jBadd1.setForeground(new java.awt.Color(255, 255, 255));
@@ -384,8 +523,23 @@ public class Products extends javax.swing.JDialog {
         jBclear1.setForeground(new java.awt.Color(255, 255, 255));
         jBclear1.setText("Clear");
         jBclear1.setBorderPainted(false);
+        jBclear1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jBclear1ActionPerformed(evt);
+            }
+        });
 
         jclose1.setText("Close");
+
+        jBsearch.setBackground(new java.awt.Color(48, 56, 72));
+        jBsearch.setForeground(new java.awt.Color(255, 255, 255));
+        jBsearch.setText("Search");
+        jBsearch.setBorderPainted(false);
+        jBsearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jBsearchActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -396,7 +550,7 @@ public class Products extends javax.swing.JDialog {
                 .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap(44, Short.MAX_VALUE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jBadd1)
@@ -410,7 +564,11 @@ public class Products extends javax.swing.JDialog {
                         .addComponent(jclose1))
                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane2)))
+                        .addComponent(jScrollPane2))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jTsearch, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jBsearch)))
                 .addGap(42, 42, 42))
         );
         jPanel1Layout.setVerticalGroup(
@@ -427,9 +585,13 @@ public class Products extends javax.swing.JDialog {
                     .addComponent(jBedit1)
                     .addComponent(jBclear1)
                     .addComponent(jclose1))
-                .addGap(33, 33, 33)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 29, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jTsearch, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jBsearch))
+                .addGap(18, 18, 18)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 236, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(68, Short.MAX_VALUE))
+                .addGap(31, 31, 31))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -468,19 +630,38 @@ public class Products extends javax.swing.JDialog {
 
     private void jBadd1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBadd1ActionPerformed
         registerCustumer();
+        searchProduct();
+        clearFields(jPanelDataProduct1);
+        clearFields(jPanelDataProduct2);
     }//GEN-LAST:event_jBadd1ActionPerformed
 
     private void jBremove1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBremove1ActionPerformed
-
+        remove_costumer();
+        searchProduct();
+        clearFields(jPanelDataProduct1);
+        clearFields(jPanelDataProduct2);
     }//GEN-LAST:event_jBremove1ActionPerformed
 
     private void jBedit1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBedit1ActionPerformed
-
+        initTableListenerProduct();
+        changeProductDatas();
+        searchProduct();
+        clearFields(jPanelDataProduct1);
+        clearFields(jPanelDataProduct2);
     }//GEN-LAST:event_jBedit1ActionPerformed
 
     private void jCcategoryActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCcategoryActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jCcategoryActionPerformed
+
+    private void jBsearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBsearchActionPerformed
+        searchProduct();
+    }//GEN-LAST:event_jBsearchActionPerformed
+
+    private void jBclear1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBclear1ActionPerformed
+        clearFields(jPanelDataProduct1);
+        clearFields(jPanelDataProduct2);
+    }//GEN-LAST:event_jBclear1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -533,6 +714,7 @@ public class Products extends javax.swing.JDialog {
     private javax.swing.JButton jBedit1;
     private javax.swing.JButton jBremove;
     private javax.swing.JButton jBremove1;
+    private javax.swing.JButton jBsearch;
     private javax.swing.JComboBox<String> jCcategory;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel16;
@@ -541,18 +723,20 @@ public class Products extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLidProduct;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
-    private javax.swing.JPanel jPanel5;
+    private javax.swing.JPanel jPanelDataProduct1;
+    private javax.swing.JPanel jPanelDataProduct2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
+    private javax.swing.JTable jTableProduct;
     private javax.swing.JTextArea jTdescription;
     private javax.swing.JTextField jTmark;
     private javax.swing.JTextField jTname;
+    private javax.swing.JTextField jTsearch;
     private javax.swing.JTextField jTvalue;
     private javax.swing.JButton jclose;
     private javax.swing.JButton jclose1;
